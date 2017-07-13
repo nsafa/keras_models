@@ -1,32 +1,31 @@
 # -*- coding: utf-8 -*-
-'''VGG16 model for Keras.
+"""VGG16 model for Keras.
 
-# Reference:
+# Reference
 
 - [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/abs/1409.1556)
 
-'''
+"""
 from __future__ import print_function
+from __future__ import absolute_import
 
-import numpy as np
 import warnings
 
-from keras.models import Model
-from keras.layers import Flatten
-from keras.layers import Dense
-from keras.layers import Input
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.preprocessing import image
-from keras.utils import layer_utils
-from keras.utils.data_utils import get_file
-from keras import backend as K
-from keras.applications.imagenet_utils import decode_predictions
-from keras.applications.imagenet_utils import preprocess_input
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.engine.topology import get_source_inputs
+from ..models import Model
+from ..layers import Flatten
+from ..layers import Dense
+from ..layers import Input
+from ..layers import Conv2D
+from ..layers import MaxPooling2D
+from ..layers import GlobalAveragePooling2D
+from ..layers import GlobalMaxPooling2D
+from ..engine.topology import get_source_inputs
+from ..utils import layer_utils
+from ..utils.data_utils import get_file
+from .. import backend as K
+from .imagenet_utils import decode_predictions
+from .imagenet_utils import preprocess_input
+from .imagenet_utils import _obtain_input_shape
 
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
@@ -60,7 +59,7 @@ def VGG16(include_top=True, weights='imagenet',
         input_shape: optional shape tuple, only to be specified
             if `include_top` is False (otherwise the input shape
             has to be `(224, 224, 3)` (with `channels_last` data format)
-            or `(3, 224, 244)` (with `channels_first` data format).
+            or `(3, 224, 224)` (with `channels_first` data format).
             It should have exactly 3 inputs channels,
             and width and height should be no smaller than 48.
             E.g. `(200, 200, 3)` would be one valid value.
@@ -188,17 +187,3 @@ def VGG16(include_top=True, weights='imagenet',
                               'your Keras config '
                               'at ~/.keras/keras.json.')
     return model
-
-
-if __name__ == '__main__':
-    model = VGG16(include_top=True, weights='imagenet')
-
-    img_path = 'elephant.jpg'
-    img = image.load_img(img_path, target_size=(224, 224))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-    print('Input image shape:', x.shape)
-
-    preds = model.predict(x)
-    print('Predicted:', decode_predictions(preds))

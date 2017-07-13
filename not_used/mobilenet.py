@@ -1,7 +1,5 @@
 """MobileNet v1 models for Keras.
 
-Code contributed by Somshubra Majumdar (@titu1994).
-
 MobileNet is a general architecture and can be used for multiple use cases.
 Depending on the use case, it can use different input layer size and
 different width factors. This allows different width models to reduce
@@ -44,7 +42,7 @@ the 100 % MobileNet on various input sizes:
 ------------------------------------------------------------------------
 
 The weights for all 16 models are obtained and translated
-from Tensorflow checkpoints found at
+from TensorFlow checkpoints found at
 https://github.com/tensorflow/models/blob/master/slim/nets/mobilenet_v1.md
 
 # Reference
@@ -56,29 +54,26 @@ from __future__ import absolute_import
 from __future__ import division
 
 import warnings
-import numpy as np
 
-from keras.preprocessing import image
-
-from keras.models import Model
-from keras.layers import Input
-from keras.layers import Activation
-from keras.layers import Dropout
-from keras.layers import Reshape
-from keras.layers import BatchNormalization
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.layers import Conv2D
-from keras import initializers
-from keras import regularizers
-from keras import constraints
-from keras.utils import conv_utils
-from keras.utils.data_utils import get_file
-from keras.engine.topology import get_source_inputs
-from keras.engine import InputSpec
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.applications.imagenet_utils import decode_predictions
-from keras import backend as K
+from ..models import Model
+from ..layers import Input
+from ..layers import Activation
+from ..layers import Dropout
+from ..layers import Reshape
+from ..layers import BatchNormalization
+from ..layers import GlobalAveragePooling2D
+from ..layers import GlobalMaxPooling2D
+from ..layers import Conv2D
+from .. import initializers
+from .. import regularizers
+from .. import constraints
+from ..utils import conv_utils
+from ..utils.data_utils import get_file
+from ..engine.topology import get_source_inputs
+from ..engine import InputSpec
+from ..applications.imagenet_utils import _obtain_input_shape
+from ..applications.imagenet_utils import decode_predictions
+from .. import backend as K
 
 
 BASE_WEIGHT_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.6/'
@@ -131,27 +126,27 @@ class DepthwiseConv2D(Conv2D):
             Keras config file at `~/.keras/keras.json`.
             If you never set it, then it will be "channels_last".
         activation: Activation function to use
-            (see [activations](keras./activations.md)).
+            (see [activations](../activations.md)).
             If you don't specify anything, no activation is applied
             (ie. "linear" activation: `a(x) = x`).
         use_bias: Boolean, whether the layer uses a bias vector.
         depthwise_initializer: Initializer for the depthwise kernel matrix
-            (see [initializers](keras./initializers.md)).
+            (see [initializers](../initializers.md)).
         bias_initializer: Initializer for the bias vector
-            (see [initializers](keras./initializers.md)).
+            (see [initializers](../initializers.md)).
         depthwise_regularizer: Regularizer function applied to
             the depthwise kernel matrix
-            (see [regularizer](keras./regularizers.md)).
+            (see [regularizer](../regularizers.md)).
         bias_regularizer: Regularizer function applied to the bias vector
-            (see [regularizer](keras./regularizers.md)).
+            (see [regularizer](../regularizers.md)).
         activity_regularizer: Regularizer function applied to
             the output of the layer (its "activation").
-            (see [regularizer](keras./regularizers.md)).
+            (see [regularizer](../regularizers.md)).
         depthwise_constraint: Constraint function applied to
             the depthwise kernel matrix
-            (see [constraints](keras./constraints.md)).
+            (see [constraints](../constraints.md)).
         bias_constraint: Constraint function applied to the bias vector
-            (see [constraints](keras./constraints.md)).
+            (see [constraints](../constraints.md)).
 
     # Input shape
         4D tensor with shape:
@@ -369,7 +364,7 @@ def MobileNet(input_shape=None,
     """
 
     if K.backend() != 'tensorflow':
-        raise RuntimeError('Only Tensorflow backend is currently supported, '
+        raise RuntimeError('Only TensorFlow backend is currently supported, '
                            'as other backends do not support '
                            'depthwise convolution.')
 
@@ -644,24 +639,3 @@ def _depthwise_conv_block(inputs, pointwise_conv_filters, alpha,
                name='conv_pw_%d' % block_id)(x)
     x = BatchNormalization(axis=channel_axis, name='conv_pw_%d_bn' % block_id)(x)
     return Activation(relu6, name='conv_pw_%d_relu' % block_id)(x)
-
-
-if __name__ == '__main__':
-    for r in [128, 160, 192, 224]:
-        for a in [0.25, 0.50, 0.75, 1.0]:
-            if r == 224:
-                model = MobileNet(include_top=True, weights='imagenet',
-                                  input_shape=(r, r, 3), alpha=a)
-
-                img_path = 'elephant.jpg'
-                img = image.load_img(img_path, target_size=(r, r))
-                x = image.img_to_array(img)
-                x = np.expand_dims(x, axis=0)
-                x = preprocess_input(x)
-                print('Input image shape:', x.shape)
-
-                preds = model.predict(x)
-                print(np.argmax(preds))
-                print('Predicted:', decode_predictions(preds, 1))
-
-            model = MobileNet(include_top=False, weights='imagenet')

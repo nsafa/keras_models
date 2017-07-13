@@ -14,26 +14,23 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import warnings
-import numpy as np
 
-from keras.models import Model
-from keras import layers
-from keras.layers import Activation
-from keras.layers import Dense
-from keras.layers import Input
-from keras.layers import BatchNormalization
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import AveragePooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.engine.topology import get_source_inputs
-from keras.utils.layer_utils import convert_all_kernels_in_model
-from keras.utils.data_utils import get_file
-from keras import backend as K
-from keras.applications.imagenet_utils import decode_predictions
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.preprocessing import image
+from ..models import Model
+from .. import layers
+from ..layers import Activation
+from ..layers import Dense
+from ..layers import Input
+from ..layers import BatchNormalization
+from ..layers import Conv2D
+from ..layers import MaxPooling2D
+from ..layers import AveragePooling2D
+from ..layers import GlobalAveragePooling2D
+from ..layers import GlobalMaxPooling2D
+from ..engine.topology import get_source_inputs
+from ..utils.data_utils import get_file
+from .. import backend as K
+from .imagenet_utils import decode_predictions
+from .imagenet_utils import _obtain_input_shape
 
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.5/inception_v3_weights_tf_dim_ordering_tf_kernels.h5'
@@ -49,7 +46,7 @@ def conv2d_bn(x,
               name=None):
     """Utility function to apply conv + BN.
 
-    Arguments:
+    # Arguments
         x: input tensor.
         filters: filters in `Conv2D`.
         num_row: height of the convolution kernel.
@@ -60,7 +57,7 @@ def conv2d_bn(x,
             for the convolution and `name + '_bn'` for the
             batch norm layer.
 
-    Returns:
+    # Returns
         Output tensor after applying `Conv2D` and `BatchNormalization`.
     """
     if name is not None:
@@ -103,7 +100,7 @@ def InceptionV3(include_top=True,
     specified in your Keras config file.
     Note that the default input image size for this model is 299x299.
 
-    Arguments:
+    # Arguments
         include_top: whether to include the fully-connected
             layer at the top of the network.
         weights: one of `None` (random initialization)
@@ -132,10 +129,10 @@ def InceptionV3(include_top=True,
             into, only to be specified if `include_top` is True, and
             if no `weights` argument is specified.
 
-    Returns:
+    # Returns
         A Keras model instance.
 
-    Raises:
+    # Raises
         ValueError: in case of invalid argument for `weights`,
             or invalid input shape.
     """
@@ -159,7 +156,10 @@ def InceptionV3(include_top=True,
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
-        img_input = Input(tensor=input_tensor, shape=input_shape)
+        if not K.is_keras_tensor(input_tensor):
+            img_input = Input(tensor=input_tensor, shape=input_shape)
+        else:
+            img_input = input_tensor
 
     if K.image_data_format() == 'channels_first':
         channel_axis = 1
@@ -383,8 +383,6 @@ def InceptionV3(include_top=True,
                 cache_subdir='models',
                 md5_hash='bcbd6486424b2319ff4ef7d526e38f63')
         model.load_weights(weights_path)
-        if K.backend() == 'theano':
-            convert_all_kernels_in_model(model)
     return model
 
 
@@ -393,17 +391,3 @@ def preprocess_input(x):
     x -= 0.5
     x *= 2.
     return x
-
-
-if __name__ == '__main__':
-    model = InceptionV3(include_top=True, weights='imagenet')
-
-    img_path = 'elephant.jpg'
-    img = image.load_img(img_path, target_size=(299, 299))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-
-    x = preprocess_input(x)
-
-    preds = model.predict(x)
-    print('Predicted:', decode_predictions(preds))

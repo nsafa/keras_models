@@ -1,30 +1,32 @@
 # -*- coding: utf-8 -*-
-'''VGG19 model for Keras.
+"""VGG19 model for Keras.
 
-# Reference:
+# Reference
 
 - [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/abs/1409.1556)
 
-'''
+"""
 from __future__ import print_function
+from __future__ import absolute_import
 
-import numpy as np
 import warnings
 
 from keras.models import Model
-from keras.layers import Flatten, Dense, Input
+from keras.layers import Flatten
+from keras.layers import Dense
+from keras.layers import Input
 from keras.layers import Conv2D
 from keras.layers import MaxPooling2D
-from keras.layers import GlobalMaxPooling2D
 from keras.layers import GlobalAveragePooling2D
-from keras.preprocessing import image
+from keras.layers import GlobalMaxPooling2D
+from keras.regularizers import l2
+from keras.engine.topology import get_source_inputs
 from keras.utils import layer_utils
 from keras.utils.data_utils import get_file
 from keras import backend as K
-from keras.applications.imagenet_utils import decode_predictions
-from keras.applications.imagenet_utils import preprocess_input
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.engine.topology import get_source_inputs
+from imagenet_utils import decode_predictions
+from imagenet_utils import preprocess_input
+from imagenet_utils import _obtain_input_shape
 
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
@@ -34,7 +36,7 @@ WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases
 def VGG19(include_top=True, weights='imagenet',
           input_tensor=None, input_shape=None,
           pooling=None,
-          classes=1000):
+          classes=1000, weight_decay=0):
     """Instantiates the VGG19 architecture.
 
     Optionally loads weights pre-trained
@@ -58,7 +60,7 @@ def VGG19(include_top=True, weights='imagenet',
         input_shape: optional shape tuple, only to be specified
             if `include_top` is False (otherwise the input shape
             has to be `(224, 224, 3)` (with `channels_last` data format)
-            or `(3, 224, 244)` (with `channels_first` data format).
+            or `(3, 224, 224)` (with `channels_first` data format).
             It should have exactly 3 inputs channels,
             and width and height should be no smaller than 48.
             E.g. `(200, 200, 3)` would be one valid value.
@@ -107,42 +109,61 @@ def VGG19(include_top=True, weights='imagenet',
         else:
             img_input = input_tensor
     # Block 1
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1')(img_input)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2')(x)
+    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1',
+               kernel_regularizer=l2(weight_decay))(img_input)
+    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2',
+               kernel_regularizer=l2(weight_decay))(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
 
     # Block 2
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1')(x)
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv2')(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv2',
+               kernel_regularizer=l2(weight_decay))(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
 
     # Block 3
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1')(x)
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv2')(x)
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv3')(x)
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv4')(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv2',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv3',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv4',
+               kernel_regularizer=l2(weight_decay))(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
 
     # Block 4
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1')(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv2')(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv4')(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv2',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv3',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv4',
+               kernel_regularizer=l2(weight_decay))(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
 
     # Block 5
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv1')(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv2')(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3')(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv4')(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv1',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv2',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3',
+               kernel_regularizer=l2(weight_decay))(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv4',
+               kernel_regularizer=l2(weight_decay))(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
 
     if include_top:
         # Classification block
         x = Flatten(name='flatten')(x)
-        x = Dense(4096, activation='relu', name='fc1')(x)
-        x = Dense(4096, activation='relu', name='fc2')(x)
-        x = Dense(classes, activation='softmax', name='predictions')(x)
+        x = Dense(4096, activation='relu', name='fc1',
+               kernel_regularizer=l2(weight_decay))(x)
+        x = Dense(4096, activation='relu', name='fc2',
+               kernel_regularizer=l2(weight_decay))(x)
+        x = Dense(classes, activation='softmax', name='predictions',
+               kernel_regularizer=l2(weight_decay))(x)
     else:
         if pooling == 'avg':
             x = GlobalAveragePooling2D()(x)
@@ -189,17 +210,3 @@ def VGG19(include_top=True, weights='imagenet',
                               'your Keras config '
                               'at ~/.keras/keras.json.')
     return model
-
-
-if __name__ == '__main__':
-    model = VGG19(include_top=True, weights='imagenet')
-
-    img_path = 'cat.jpg'
-    img = image.load_img(img_path, target_size=(224, 224))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-    print('Input image shape:', x.shape)
-
-    preds = model.predict(x)
-    print('Predicted:', decode_predictions(preds))
