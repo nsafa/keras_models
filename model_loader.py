@@ -1,44 +1,71 @@
 import keras
 
-from resnet50 import ResNet50
-from vgg19 import VGG19
+import resnet50
+import vgg19
 
-def load_model(model_name, no_cats, final_activation = 'softmax', weight_decay = 0, random_weights = False):
+
+def load_full_model(model_name, random_weights=False, no_cats=2, weight_decay=0, activation='softmax'):
 	"""
-	Loads a model with a randomly initialized last layer.
+	Loads a model with a randomly initialized last layer
+
 		model_name: ResNet50, VGG19
-		no_cats: Number of outputs
-		final_activation: activation of the final layer (None, softmax, sigmoid)
-		weight decay: L2 weight decay for all layers
 		random_weights: Random weights or ImageNet pre-training
+		no_cats: Number of outputs
+		weight decay: L2 weight decay for all layers
+		activation: Activation of the final layer (None, softmax, sigmoid)
 	"""
+	input_tensor=keras.layers.Input(shape=(224, 224, 3))
 
 	if random_weights:
 		weights = None
 	else:
 		weights = 'imagenet'
 
-	# load the model without the final layer
 	if model_name == 'ResNet50':
-		model = ResNet50(weights = weights,
-			include_top = False,
-			input_tensor = keras.layers.Input(shape = (224, 224, 3)),
-			weight_decay = weight_decay)
+		model = resnet50.ResNet50(weights=weights, input_tensor=input_tensor, weight_decay=weight_decay,
+            no_cats=no_cats, activation=activation)
 	elif model_name == 'VGG19':
-		model = VGG19(weights = weights,
-			include_top = False,
-			input_tensor = keras.layers.Input(shape = (224, 224, 3)),
-			weight_decay = weight_decay)
+		model = vgg19.VGG19(weights=weights, input_tensor=input_tensor, weight_decay=weight_decay,
+            no_cats=no_cats, activation=activation)
 	else:
 		raise ValueError('Invalid model_name')
 
-	# add the final layer
-	x = keras.layers.Flatten()(model.output)
-	x = keras.layers.Dense(no_cats, activation = final_activation,
-		W_regularizer = keras.regularizers.l2(weight_decay), name = 'fc_final')(x)
-	model = keras.models.Model(model.input, x)
-
 	return model
+
+
+def load_tail_model(model_name, source_model, no_cats=2, weight_decay=0, activation='softmax', stage='final'):
+	"""
+	Loads the tail of a model, starting from 'stage'
+	Copies the weights from source_model
+
+		model_name: ResNet50, VGG19
+		source_model: The model which the weights are going to be copied from
+		no_cats: Number of outputs
+		weight decay: L2 weight decay for all layers
+		activation: Activation of the final layer (None, softmax, sigmoid)
+		stage: Which stage the tail starts 
+	"""
+
+	if model_name == 'ResNet50':
+		no_layers_to_remain = len(source_model.layers) - resnet50.get_no_layers(stage)
+		input_shape = source_model.layers[-no_layers_to_remain].input_shape[1:]
+		input_tensor = keras.layers.Input(shape = input_shape)
+
+		tail_model = resnet50.ResNet50_tail(input_tensor=input_tensor, weight_decay=weight_decay,
+                stage=stage, no_cats=no_cats, activation=activation)
+	elif model_name == 'VGG19':
+		no_layers_to_remain = len(source_model.layers) - vgg19.get_no_layers(stage)
+		input_shape = source_model.layers[-no_layers_to_remain].input_shape[1:]
+		input_tensor = keras.layers.Input(shape = input_shape)
+
+		tail_model = vgg19.VGG19_tail(input_tensor=input_tensor, weight_decay=weight_decay,
+                stage=stage, no_cats=no_cats, activation=activation)
+
+	for ind_layer in range(1, len(tail_model.layers) + 1):
+		tail_model.layers[-ind_layer].set_weights(source_model.layers[-ind_layer].get_weights())
+
+	return tail_model
+
 
 def set_no_trainable_layers(model, no_trainable_layers):
 	"""
