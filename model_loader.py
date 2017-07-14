@@ -22,15 +22,15 @@ def load_full_model(model_name, random_weights=False, no_cats=2, weight_decay=0,
 		weights = 'imagenet'
 
 	if model_name == 'ResNet50':
-		model = resnet50.ResNet50(weights=weights, input_tensor=input_tensor, weight_decay=weight_decay,
+		full_model = resnet50.ResNet50(weights=weights, input_tensor=input_tensor, weight_decay=weight_decay,
             no_cats=no_cats, activation=activation)
 	elif model_name == 'VGG19':
-		model = vgg19.VGG19(weights=weights, input_tensor=input_tensor, weight_decay=weight_decay,
+		full_model = vgg19.VGG19(weights=weights, input_tensor=input_tensor, weight_decay=weight_decay,
             no_cats=no_cats, activation=activation)
 	else:
 		raise ValueError('Invalid model_name')
 
-	return model
+	return full_model
 
 
 def load_tail_model(model_name, source_model, no_cats=2, weight_decay=0, activation='softmax', stage='final'):
@@ -45,7 +45,6 @@ def load_tail_model(model_name, source_model, no_cats=2, weight_decay=0, activat
 		activation: Activation of the final layer (None, softmax, sigmoid)
 		stage: Which stage the tail starts 
 	"""
-
 	if model_name == 'ResNet50':
 		no_layers_to_remain = len(source_model.layers) - resnet50.get_no_layers(stage)
 		input_shape = source_model.layers[-no_layers_to_remain].input_shape[1:]
@@ -60,11 +59,40 @@ def load_tail_model(model_name, source_model, no_cats=2, weight_decay=0, activat
 
 		tail_model = vgg19.VGG19_tail(input_tensor=input_tensor, weight_decay=weight_decay,
                 stage=stage, no_cats=no_cats, activation=activation)
+	else:
+		raise ValueError('Invalid model_name')
 
 	for ind_layer in range(1, len(tail_model.layers) + 1):
 		tail_model.layers[-ind_layer].set_weights(source_model.layers[-ind_layer].get_weights())
 
 	return tail_model
+
+
+def load_head_model(model_name, random_weights=False, no_cats=2, weight_decay=0, activation='softmax', stage='final'):
+	"""
+	Loads the head of a model, up to (excluding) 'stage'
+
+		model_name: ResNet50, VGG19
+		random_weights: Random weights or ImageNet pre-training
+		no_cats: Number of outputs
+		weight decay: L2 weight decay for all layers
+		activation: Activation of the final layer (None, softmax, sigmoid)
+		stage: Which stage the head ends (excluding)
+	"""
+	head_model = load_full_model(model_name, random_weights=random_weights, no_cats=no_cats, weight_decay=weight_decay, activation=activation)
+
+	if model_name == 'ResNet50':
+		no_layers = resnet50.get_no_layers(stage)
+	elif model_name == 'VGG19':
+		no_layers = vgg19.get_no_layers(stage)
+	else:
+		raise ValueError('Invalid model_name')
+
+	while len(head_model.layers) > no_layers:
+		head_model.layers.pop()
+	head_model = keras.models.Model(head_model.input, head_model.layers[-1].output)
+
+	return head_model
 
 
 def set_no_trainable_layers(model, no_trainable_layers):
