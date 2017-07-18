@@ -95,12 +95,19 @@ def load_head_model(model_name, random_weights=False, no_cats=2, weight_decay=0,
 	return head_model
 
 
-def set_no_trainable_layers(model, no_trainable_layers):
+def set_trainable_layers(model, model_name, stage):
 	"""
-	Sets only the final no_trainable_layers layers as trainable.
+	Sets the layers starting from (and including) 'stage' to be trainable
 	"""
 	for layer in model.layers:
 		layer.trainable = False
+
+	if model_name == 'ResNet50':
+		no_trainable_layers = len(model.layers) - resnet50.get_no_layers(stage)
+	elif model_name == 'VGG19':
+		no_trainable_layers = len(model.layers) - vgg.get_no_layers(stage)
+	else:
+		raise ValueError('Invalid model_name')
 
 	for layer in model.layers[-no_trainable_layers:]:
 		layer.trainable = True
