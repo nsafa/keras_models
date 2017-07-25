@@ -24,9 +24,9 @@ from keras.engine.topology import get_source_inputs
 from keras.utils import layer_utils
 from keras.utils.data_utils import get_file
 from keras import backend as K
-from imagenet_utils import decode_predictions
-from imagenet_utils import preprocess_input
-from imagenet_utils import _obtain_input_shape
+from .imagenet_utils import decode_predictions
+from .imagenet_utils import preprocess_input
+from .imagenet_utils import _obtain_input_shape
 
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg19_weights_tf_dim_ordering_tf_kernels.h5'
@@ -39,7 +39,7 @@ def VGG19(weights='imagenet', input_tensor=None, weight_decay=0,
     Builds the entire model, excluding the final fully connected layer.
     Adds a randomly initialized, fully connected layer to the end.
     Feed the input tensor as thus:
-        input_tensor=keras.layers.Input(shape=(224, 224, 3)), 
+        input_tensor=keras.layers.Input(shape=(224, 224, 3))
     """
     if weights not in {'imagenet', None}:
         raise ValueError('The `weights` argument should be either '
