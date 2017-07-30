@@ -1,4 +1,4 @@
-I modified some of the models (ResNet50 and VGG19) under [keras/applications](https://github.com/fchollet/keras/tree/master/keras/applications).
+I modified some of the models (ResNet50 and VGG19) under [keras/applications](https://github.com/fchollet/keras/tree/master/keras/applications). DenseNet is adapted from [flyyufelix/cnn_finetune](https://github.com/flyyufelix/cnn_finetune).
 
 ### Added L2 weight decay
 Keras doesn't allow adding regularization to model instances. It has to be added while building the model. This means that loading an ImageNet pre-trained model and fine-tuning it with regularization is not possible. I updated the model building functions to take an L2 weight decay parameter, and apply it to all layers.
