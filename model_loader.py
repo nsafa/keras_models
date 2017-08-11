@@ -105,7 +105,7 @@ def set_trainable_layers(model, model_name, stage):
 	if model_name == 'ResNet50':
 		no_trainable_layers = len(model.layers) - resnet50.get_no_layers(stage)
 	elif model_name == 'VGG19':
-		no_trainable_layers = len(model.layers) - vgg.get_no_layers(stage)
+		no_trainable_layers = len(model.layers) - vgg19.get_no_layers(stage)
 	else:
 		raise ValueError('Invalid model_name')
 
