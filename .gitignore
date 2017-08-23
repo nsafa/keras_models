@@ -1,2 +1,4 @@
+imagenet_models/
+
 *.pyc
 *.png
